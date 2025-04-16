@@ -184,6 +184,56 @@ def analyze_graph(graph):
         x1b, x2b, y1b, y2b = x_y_range(op2_name)
         return (x1a < x2b and x2a > x1b) and (y1a < y2b and y2a > y1b)
 
+    def number_of_unique_angles(angles, rounding_factor=5):
+        rounded_angles = [round(angle / rounding_factor) * rounding_factor for angle in angles]
+        unique_angles = set(rounded_angles)
+
+        return len(unique_angles)
+    
+    def compute_final_score():
+        total_ops = len([op for op in operations if op["type"] == "PRIMITIVE_OPERATION"])
+        total_links = len(links)
+        max_alignment = total_ops
+        max_spacing = total_ops
+        max_angles = node_count  #Assume number of angles can scale with nodes
+        #Raw metric values
+        x_align = len(find_alignment(x_values, 25))
+        y_align = len(find_alignment(y_values, 25))
+        x_spacing = spacing_uniformity(find_alignment(x_values, 25), 25)
+        y_spacing = spacing_uniformity(find_alignment(y_values, 25), 25)
+        touching = len(touching_pairs)
+        unique_angles = number_of_unique_angles(angle_values)
+        #Weighted components (adjust weights as needed)
+        directionality_score = round(1 - (backwards_links / total_links), 2) if total_links else 1
+        hierarchy_score = round(1 - (nodes_blocked / node_count), 2) if node_count else 1
+        stacking_score = round(1 - (improper_stacking / total_links), 2) if total_links else 1
+        spacing_score = round(((x_spacing + y_spacing) / (2 * max_spacing)), 2) if max_spacing else 1
+        alignment_score = round(((x_align + y_align) / (2 * max_alignment)), 2) if max_alignment else 1
+        angle_score = round(1 - (unique_angles / max_angles), 2) if max_angles else 1
+        touching_score = round(1 - (touching / total_ops**2), 2) if total_ops > 1 else 1  #Compare against possible pairs
+        excessive_node_score = round(1 - (excessive_nodes / total_links), 2) if total_links else 1
+        final_score = round((
+        0.15 * directionality_score +
+        0.15 * hierarchy_score +
+        0.15 * stacking_score +
+        0.15 * spacing_score +
+        0.10 * alignment_score +
+        0.10 * angle_score +
+        0.10 * touching_score +
+        0.10 * excessive_node_score
+        ) * 100, 2)
+        return {
+            "Final Score": final_score,
+            "Directionality Score": directionality_score,
+            "Hierarchy Score": hierarchy_score,
+            "Stacking Score": stacking_score,
+            "Spacing Score": spacing_score,
+            "Alignment Score": alignment_score,
+            "Angle Score": angle_score,
+            "Touching Score": touching_score,
+            "Excessive Node Score": excessive_node_score
+        }
+
     for op in operations:
         if op["type"] == "PRIMITIVE_OPERATION":
             x_values.append(op["position"]["x"])
@@ -256,6 +306,8 @@ def analyze_graph(graph):
                 if boxes_touch(op1["name"], op2["name"]):
                     touching_pairs.append((op1["name"], op2["name"]))
 
+    grading = compute_final_score()
+
     results = {
         "Total Operations": len(operations),
         "Operations X Alignment": len(find_alignment(x_values, 25)),
@@ -272,12 +324,20 @@ def analyze_graph(graph):
         "Total Nodes": node_count,
         "Nodes Blocked": nodes_blocked,
         "Excessive Nodes": excessive_nodes,
+        "Final Score": round(grading["Final Score"], 2),
+        "Directionality Score": round(grading["Directionality Score"], 2),
+        "Hierarchy Score": round(grading["Hierarchy Score"], 2),
+        "Stacking Score": round(grading["Stacking Score"], 2),
+        "Spacing Score": round(grading["Spacing Score"], 2),
+        "Alignment Score": round(grading["Alignment Score"], 2),
+        "Angle Score": round(grading["Angle Score"], 2),
+        "Touching Score": round(grading["Touching Score"], 2),
+        "Excessive Node Score": round(grading["Excessive Node Score"], 2)
     }
 
-    print(nodes_and_operations)
     return results
 
-with open("test_graph/graph_pcdarulg1.json", "r") as f:
+with open("test_graph/graph_pcdarulg.json", "r") as f:
     graph = json.load(f)
     print(analyze_graph(graph))
     
