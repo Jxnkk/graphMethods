@@ -9,9 +9,6 @@ def analyze_graph(graph):
     angle_values = []
     touching_pairs = []
     nodes_and_operations = []
-    common_h_distance = 0
-    common_v_distance = 0
-    total_angles = 0
     angles_of_45 = 0
     node_count = 0
     nodes_blocked = 0
@@ -45,6 +42,12 @@ def analyze_graph(graph):
                 return op["outputs"]
         return None
 
+    def get_inputs_this():
+        return [input["name"] for input in graph.get("inputs", [])]
+    
+    def get_outputs_this():
+        return [output["name"] for output in graph.get("output", [])]
+
     def get_location_operation(operation_name, data, type):
         x = get_x_value(operation_name)
         y = get_y_value(operation_name)
@@ -63,7 +66,35 @@ def analyze_graph(graph):
             else:
                 break
 
-        y += 45 + (data_location * 45)
+        y += 50 + (data_location * 50)
+        return {"x": x, "y": y}
+
+    def find_greatest_x(data):
+        max_x = 0
+        for group in data:
+            for item in group:
+                if "x" in item:
+                    max_x = max(max_x, item["x"])
+        return max_x
+
+    def get_location_this(data, type):
+        x = 0
+        y = 87.5
+
+        if type == "source":
+            i_o = get_inputs_this()
+        else:
+            x = find_greatest_x(nodes_and_operations)
+            i_o = get_outputs_this()
+
+        data_location = 0
+        for box in i_o:
+            if box != data:
+                data_location += 1
+            else:
+                break
+
+        y += 50 + (data_location * 50)
         return {"x": x, "y": y}
 
     def eliminate_similar(numbers, threshold):
@@ -175,6 +206,8 @@ def analyze_graph(graph):
         nao = [{"operation": source_name, "data": source_data}]
         if source_name != "this":
             nao.append(get_location_operation(source_name, source_data, "source"))
+        else:
+            nao.append(get_location_this(source_data, "source"))
         for node in nodes:
             node_count += 1
             nao.append(node)
@@ -185,6 +218,8 @@ def analyze_graph(graph):
                         nodes_blocked += 1
         if sink_name != "this":
             nao.append(get_location_operation(sink_name, sink_data, "sink"))
+        else:
+            nao.append(get_location_this(source_data, "sink"))
         nao.append({"operation": sink_name, "data": sink_data})
         nodes_and_operations.append(nao)
 
@@ -239,9 +274,10 @@ def analyze_graph(graph):
         "Excessive Nodes": excessive_nodes,
     }
 
+    print(nodes_and_operations)
     return results
 
-with open("test_graph/graph_pcdarulg.json", "r") as f:
+with open("test_graph/graph_pcdarulg1.json", "r") as f:
     graph = json.load(f)
     print(analyze_graph(graph))
     
