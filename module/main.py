@@ -9,11 +9,9 @@ def analyze_graph(graph):
     angle_values = []
     touching_pairs = []
     nodes_and_operations = []
-    angles_of_45 = 0
     node_count = 0
     nodes_blocked = 0
     backwards_links = 0
-    excessive_nodes = 0
     stacking = 0
     proper_stacking = 0
     improper_stacking = 0
@@ -205,16 +203,16 @@ def analyze_graph(graph):
         unique_angles = number_of_unique_angles(angle_values)
         #Weighted components (adjust weights as needed)
         directionality_score = round(1 - (backwards_links / total_links), 2) if total_links else 1
-        hierarchy_score = round(1 - (nodes_blocked / node_count), 2) if node_count else 1
         stacking_score = round(1 - (improper_stacking / total_links), 2) if total_links else 1
         spacing_score = round(((x_spacing + y_spacing) / (2 * max_spacing)), 2) if max_spacing else 1
         alignment_score = round(((x_align + y_align) / (2 * max_alignment)), 2) if max_alignment else 1
         angle_score = round(1 - (unique_angles / max_angles), 2) if max_angles else 1
         touching_score = round(1 - (touching / total_ops**2), 2) if total_ops > 1 else 1  #Compare against possible pairs
-        excessive_node_score = round(1 - (excessive_nodes / total_links), 2) if total_links else 1
+        excessive_node_score = round(1 - (node_count / total_links), 2) if total_links else 1
+        if excessive_node_score < 0:
+            excessive_node_score = 0
         final_score = round((
         0.15 * directionality_score +
-        0.15 * hierarchy_score +
         0.15 * stacking_score +
         0.15 * spacing_score +
         0.10 * alignment_score +
@@ -225,7 +223,6 @@ def analyze_graph(graph):
         return {
             "Final Score": final_score,
             "Directionality Score": directionality_score,
-            "Hierarchy Score": hierarchy_score,
             "Stacking Score": stacking_score,
             "Spacing Score": spacing_score,
             "Alignment Score": alignment_score,
@@ -289,15 +286,6 @@ def analyze_graph(graph):
                     angle = -angle
                 angle_values.append(angle)
 
-    for angle in angle_values:
-        normalized = angle % 360
-        lower = (normalized // 45) * 45
-        upper = lower + 45
-        dev_low = abs(normalized - lower)
-        dev_up = abs(normalized - upper)
-        if min(dev_low, dev_up) <= 5:
-            angles_of_45 += 1
-
     for i in range(len(operations)):
         for j in range(i + 1, len(operations)):
             op1 = operations[i]
@@ -316,28 +304,26 @@ def analyze_graph(graph):
         "Operation Y Spacing Uniformity": spacing_uniformity(find_alignment(y_values, 25), 25),
         "Number of Touching Operations": len(touching_pairs),
         "Total Links": len(links),
-        "Angles of 45": angles_of_45,
         "Backwards Links": backwards_links,
+        "Total Angles": len(angle_values),
+        "Unique Angles": number_of_unique_angles(angle_values),
         "Total Stacking": stacking,
         "Improper Stacking": improper_stacking,
-        "Proper Stacking": proper_stacking,
         "Total Nodes": node_count,
         "Nodes Blocked": nodes_blocked,
-        "Excessive Nodes": excessive_nodes,
-        "Final Score": round(grading["Final Score"], 2),
-        "Directionality Score": round(grading["Directionality Score"], 2),
-        "Hierarchy Score": round(grading["Hierarchy Score"], 2),
-        "Stacking Score": round(grading["Stacking Score"], 2),
-        "Spacing Score": round(grading["Spacing Score"], 2),
-        "Alignment Score": round(grading["Alignment Score"], 2),
-        "Angle Score": round(grading["Angle Score"], 2),
-        "Touching Score": round(grading["Touching Score"], 2),
-        "Excessive Node Score": round(grading["Excessive Node Score"], 2)
+        "Final Score": grading["Final Score"],
+        "Directionality Score": grading["Directionality Score"],
+        "Stacking Score": grading["Stacking Score"],
+        "Spacing Score": grading["Spacing Score"],
+        "Alignment Score": grading["Alignment Score"],
+        "Angle Score": grading["Angle Score"],
+        "Touching Score": grading["Touching Score"],
+        "Excessive Node Score": grading["Excessive Node Score"]
     }
 
     return results
 
-with open("test_graph/graph_pcdarulg.json", "r") as f:
+with open("test_graph/graph_c3boljl0.json", "r") as f:
     graph = json.load(f)
     print(analyze_graph(graph))
     
