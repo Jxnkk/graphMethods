@@ -53,7 +53,7 @@ class TestGraphAnalysis(unittest.TestCase):
         self.assertEqual(result["Alignment Score"], 0.64)
         self.assertEqual(result["Angle Score"], 0.08)
         self.assertEqual(result["Touching Score"], 1)
-        self.assertEqual(result["Excessive Node Score"], 0)
+        self.assertEqual(result["Node Score"], 0)
 
     def test_graph_analysis3(self):
         with open("test_graph/graph_grz8c41o.json", "r") as f:
@@ -77,7 +77,7 @@ class TestGraphAnalysis(unittest.TestCase):
         self.assertEqual(result["Alignment Score"], 0.67)
         self.assertEqual(result["Angle Score"], 0.1)
         self.assertEqual(result["Touching Score"], 1)
-        self.assertEqual(result["Excessive Node Score"], 0.33)
+        self.assertEqual(result["Node Score"], 0.33)
 
         
     def test_graph_analysis4(self):
@@ -102,7 +102,7 @@ class TestGraphAnalysis(unittest.TestCase):
         self.assertEqual(result["Alignment Score"], 0.67)
         self.assertEqual(result["Angle Score"], 0)
         self.assertEqual(result["Touching Score"], 0.97)
-        self.assertEqual(result["Excessive Node Score"], 0)
+        self.assertEqual(result["Node Score"], 0)
     
 if __name__ == '__main__':
     unittest.main()

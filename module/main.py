@@ -212,13 +212,13 @@ def analyze_graph(graph):
         if excessive_node_score < 0:
             excessive_node_score = 0
         final_score = round((
-        0.15 * directionality_score +
+        0.20 * directionality_score +
         0.15 * stacking_score +
         0.15 * spacing_score +
-        0.10 * alignment_score +
+        0.15 * alignment_score +
         0.10 * angle_score +
         0.10 * touching_score +
-        0.10 * excessive_node_score
+        0.05 * excessive_node_score
         ) * 100, 2)
         return {
             "Final Score": final_score,
@@ -228,7 +228,7 @@ def analyze_graph(graph):
             "Alignment Score": alignment_score,
             "Angle Score": angle_score,
             "Touching Score": touching_score,
-            "Excessive Node Score": excessive_node_score
+            "Node Score": excessive_node_score
         }
 
     for op in operations:
@@ -318,12 +318,12 @@ def analyze_graph(graph):
         "Alignment Score": grading["Alignment Score"],
         "Angle Score": grading["Angle Score"],
         "Touching Score": grading["Touching Score"],
-        "Excessive Node Score": grading["Excessive Node Score"]
+        "Node Score": grading["Node Score"]
     }
 
     return results
 
-with open("test_graph/graph_c3boljl0.json", "r") as f:
+with open("test_graph/graph_2s83edio.json", "r") as f:
     graph = json.load(f)
     print(analyze_graph(graph))
     
