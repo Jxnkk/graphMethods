@@ -69,11 +69,18 @@ def analyze_graph(graph):
 
     def find_greatest_x(data):
         max_x = 0
+        isOperation = False
+
         for group in data:
-            for item in group:
+            for idx, item in enumerate(group):
                 if "x" in item:
-                    max_x = max(max_x, item["x"])
-        return max_x
+                    if item["x"] > max_x:
+                        max_x = item["x"]
+                        if idx == 0 or idx == len(group) - 1:
+                            isOperation = True
+                        else:
+                            isOperation = False
+        return max_x, isOperation
 
     def get_location_this(data, type):
         x = 0
@@ -82,7 +89,10 @@ def analyze_graph(graph):
         if type == "source":
             i_o = get_inputs_this()
         else:
-            x = find_greatest_x(nodes_and_operations)
+            x, isOperation = find_greatest_x(nodes_and_operations)
+            if(isOperation):
+                x += 285
+            x += 200
             i_o = get_outputs_this()
 
         data_location = 0
@@ -235,7 +245,7 @@ def analyze_graph(graph):
         if op["type"] == "PRIMITIVE_OPERATION":
             x_values.append(op["position"]["x"])
             y_values.append(op["position"]["y"])
-
+    
     for link in links:
         source_name = link["source"]["operation"]
         sink_name = link["sink"]["operation"]
@@ -323,7 +333,7 @@ def analyze_graph(graph):
 
     return results
 
-with open("test_graph/graph_2s83edio.json", "r") as f:
+with open("test_graph/graph_grz8c41o.json", "r") as f:
     graph = json.load(f)
     print(analyze_graph(graph))
     
