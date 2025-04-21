@@ -422,5 +422,5 @@ def analyze_graph(graph):
 
 with open("test_graph/graph_2z100o8c.json", "r") as f:
     graph = json.load(f)
-    print("Final Score:", analyze_graph(graph)["Final Score"])
+    print("Final Score:", analyze_graph(graph)["Final Score"], " out of 100")
     
