@@ -76,11 +76,37 @@ def analyze_graph(graph):
                 if "x" in item:
                     if item["x"] > max_x:
                         max_x = item["x"]
-                        if idx == 0 or idx == len(group) - 1:
+                        if (idx == 0 or idx == len(group) - 1) and (group[0].get("operation") != "this" and group[-1].get("operation") != "this"):
                             isOperation = True
                         else:
                             isOperation = False
-        return max_x, isOperation
+                
+        if isOperation:
+            x += 285
+        return max_x
+    
+    def find_greatest_y(data):
+        max_y = 0
+        isOperation = False
+        operationName = ""
+
+        for group in data:
+            for idx, item in enumerate(group):
+                if "y" in item:
+                    if item["y"] > max_y:
+                        max_y = item["y"]
+                        if idx == 0 and group[0]["operation"] != "this":
+                            isOperation = True
+                            operationName = group[0]["operation"]
+                        elif idx == len(group) - 1 and group[-1]["operation"] != "this":
+                            isOperation = True
+                            operationName = group[-1]["operation"]
+                        else:
+                            isOperation = False
+        if isOperation:
+            greatest_y = x_y_range(operationName)[3]
+
+        return max_y
 
     def get_location_this(data, type):
         x = 0
@@ -89,9 +115,7 @@ def analyze_graph(graph):
         if type == "source":
             i_o = get_inputs_this()
         else:
-            x, isOperation = find_greatest_x(nodes_and_operations)
-            if(isOperation):
-                x += 285
+            x = find_greatest_x(nodes_and_operations)
             x += 200
             i_o = get_outputs_this()
 
@@ -126,11 +150,6 @@ def analyze_graph(graph):
         result.append(current)
         counts.append(count)
         return result, counts
-
-    def compute_slope(p1, p2):
-        dx = p2["x"] - p1["x"]
-        dy = p2["y"] - p1["y"]
-        return dx / dy if dy != 0 else 0
 
     def find_alignment(values, threshold):
         firstNumber = True
@@ -172,6 +191,22 @@ def analyze_graph(graph):
 
         return spacing_uniformity
 
+    def are_mirrored_x(op1, op2, middle, x_threshold, y_threshold):
+        left_x = op1["position"]["x"]
+        right_x = op2["position"]["x"]
+        mirrored_x = abs((middle - left_x) - (right_x - middle)) <= x_threshold
+        mirrored_y = abs(op1["position"]["y"] - op2["position"]["y"]) <= y_threshold
+
+        return mirrored_x and mirrored_y
+    
+    def are_mirrored_y(op1, op2, middle, y_threshold, x_threshold):
+        top_y = op1["position"]["y"]
+        bottom_y = op2["position"]["y"]
+        mirrored_y = abs((middle - top_y) - (bottom_y - middle)) <= y_threshold
+        mirrored_x = abs(op1["position"]["x"] - op2["position"]["x"]) <= x_threshold
+
+        return mirrored_y and mirrored_x
+
     def x_y_range(operation_name):
         range_list = []
         x1 = get_x_value(operation_name)
@@ -186,6 +221,49 @@ def analyze_graph(graph):
         y2 = y1 + 45 + (s * 45)
         range_list.append(y2)
         return range_list
+    
+    def operation_symmetry(type, middle, threshold1, threshold2):
+        operations1 = []
+        operations2 = []
+
+        for op in operations:
+            if op["type"] != "PRIMITIVE_OPERATION":
+                continue
+
+            range_vals = x_y_range(op["name"])
+            if type == "x":
+                start = range_vals[0]
+                end = range_vals[1]
+            else:
+                start = range_vals[2]
+                end = range_vals[3]
+
+            if start <= middle <= end:
+                operations1.append(op)
+                operations2.append(op)
+            elif op["position"][type] <= middle:
+                operations1.append(op)
+            else:
+                operations2.append(op)
+
+        if len(operations1) == 0 or len(operations2) == 0:
+            return 0, 0
+
+        operation_count_symmetry = min(len(operations1) / len(operations2), len(operations2) / len(operations1))
+
+        operation_mirror_symmetry = 0
+        for op1 in operations1:
+            for op2 in operations2:
+                if type == "x" and are_mirrored_x(op1, op2, middle, threshold1, threshold2):
+                    operation_mirror_symmetry += 1
+                    break
+                elif type == "y" and are_mirrored_y(op1, op2, middle, threshold1, threshold2):
+                    operation_mirror_symmetry += 1
+                    break
+
+        operation_mirror_symmetry /= min(len(operations1), len(operations2))
+        return operation_count_symmetry, operation_mirror_symmetry
+
 
     def boxes_touch(op1_name, op2_name):
         x1a, x2a, y1a, y2a = x_y_range(op1_name)
@@ -303,6 +381,15 @@ def analyze_graph(graph):
             if op1["type"] == "PRIMITIVE_OPERATION" and op2["type"] == "PRIMITIVE_OPERATION":
                 if boxes_touch(op1["name"], op2["name"]):
                     touching_pairs.append((op1["name"], op2["name"]))
+            
+    greatest_x = find_greatest_x(nodes_and_operations)
+    greatest_x += 200
+    middle1 = greatest_x/2
+    greatest_y= find_greatest_y(nodes_and_operations)
+    greatest_y += 300
+    middle2 = greatest_y/2
+    count_symmetry1, mirror_symmetry1 = operation_symmetry("x", middle1, 100, 10)
+    count_symmetry2, mirror_symmetry2 = operation_symmetry("y", middle2, 100, 10)
 
     grading = compute_final_score()
 
@@ -333,7 +420,7 @@ def analyze_graph(graph):
 
     return results
 
-with open("test_graph/graph_grz8c41o.json", "r") as f:
+with open("test_graph/graph_2z100o8c.json", "r") as f:
     graph = json.load(f)
-    print(analyze_graph(graph))
+    print("Final Score:", analyze_graph(graph)["Final Score"])
     
