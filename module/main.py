@@ -13,7 +13,6 @@ def analyze_graph(graph):
     nodes_blocked = 0
     backwards_links = 0
     stacking = 0
-    proper_stacking = 0
     improper_stacking = 0
 
     def get_y_value(operation_name):
@@ -308,6 +307,30 @@ def analyze_graph(graph):
 
         node_mirror_symmetry /= min(len(nodes1), len(nodes2))
         return node_count_symmetry, node_mirror_symmetry
+    
+    def find_clustering(type, threshold_1, threshold_2):
+        deduction = 0
+        if type == "x":
+            groups = eliminate_similar(find_alignment(x_values, threshold_1), threshold_2)
+        else:
+            groups = eliminate_similar(find_alignment(y_values, threshold_2), threshold_1)
+        
+        allLinks = []
+        for i in range(len(groups[0]) - 1):
+            currentLinks = []
+            for link in links:
+                for point in link["control_points"]:
+                    if type == "x" and groups[0][i] <= point["x"] <= groups[0][i + 1]:
+                        currentLinks.append(link)
+                    elif type == "y" and groups[0][i] <= point["y"] <= groups[0][i + 1]:
+                        currentLinks.append(link)
+            allLinks.append(currentLinks)
+
+        for i in range(len(allLinks)):
+            maxLinks = max(1, int((groups[0][i + 1] - groups[0][i])/75))
+            if len(allLinks[i]) > maxLinks:
+                deduction -= 1
+        return deduction 
 
     def boxes_touch(op1_name, op2_name):
         x1a, x2a, y1a, y2a = x_y_range(op1_name)
@@ -342,18 +365,20 @@ def analyze_graph(graph):
         touching_score = round(1 - (touching / total_ops**2), 2) if total_ops > 1 else 1  #Compare against possible pairs
         symmetry_score = round(sum([op_count_symmetry1, op_count_symmetry2, op_mirror_symmetry1, op_mirror_symmetry2, node_count_symmetry1, node_count_symmetry2, node_mirror_symmetry1, node_mirror_symmetry2])/8, 2)
         excessive_node_score = round(1 - (node_count / total_links), 2) if total_links else 1
+        x_deduction = find_clustering("x", 25, 50)
+        y_deduction = find_clustering("y", 25, 50)
         if excessive_node_score < 0:
             excessive_node_score = 0
         final_score = round((
-        0.15 * directionality_score +
+        0.20 * directionality_score +
         0.15 * stacking_score +
         0.15 * spacing_score +
         0.15 * alignment_score +
         0.10 * angle_score +
-        0.10 * touching_score +
+        0.15 * touching_score +
         0.05 * excessive_node_score +
         0.05 * symmetry_score
-        ) * 100, 2)
+        ) * 100, 2) + x_deduction + y_deduction
         return {
             "Final Score": final_score,
             "Directionality Score": directionality_score,
@@ -363,7 +388,8 @@ def analyze_graph(graph):
             "Angle Score": angle_score,
             "Touching Score": touching_score,
             "Node Score": excessive_node_score,
-            "Symmetry Score": symmetry_score
+            "Symmetry Score": symmetry_score,
+            "Clustering Deduction": (x_deduction + y_deduction)/100
         }
 
     for op in operations:
@@ -466,8 +492,9 @@ def analyze_graph(graph):
         "Touching Score": grading["Touching Score"],
         "Node Score": grading["Node Score"],
         "Symmetry Score": grading["Symmetry Score"],
+        "Clustering Deduction": grading["Clustering Deduction"]
     }
-
+    
     return results
 
 with open("test_graph/graph_2z100o8c.json", "r") as f:
