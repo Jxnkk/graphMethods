@@ -191,7 +191,7 @@ def analyze_graph(graph):
 
         return spacing_uniformity
 
-    def are_mirrored_x(op1, op2, middle, x_threshold, y_threshold):
+    def are_mirrored_opx(op1, op2, middle, x_threshold, y_threshold):
         left_x = op1["position"]["x"]
         right_x = op2["position"]["x"]
         mirrored_x = abs((middle - left_x) - (right_x - middle)) <= x_threshold
@@ -199,7 +199,7 @@ def analyze_graph(graph):
 
         return mirrored_x and mirrored_y
     
-    def are_mirrored_y(op1, op2, middle, y_threshold, x_threshold):
+    def are_mirrored_opy(op1, op2, middle, y_threshold, x_threshold):
         top_y = op1["position"]["y"]
         bottom_y = op2["position"]["y"]
         mirrored_y = abs((middle - top_y) - (bottom_y - middle)) <= y_threshold
@@ -254,16 +254,60 @@ def analyze_graph(graph):
         operation_mirror_symmetry = 0
         for op1 in operations1:
             for op2 in operations2:
-                if type == "x" and are_mirrored_x(op1, op2, middle, threshold1, threshold2):
+                if type == "x" and are_mirrored_opx(op1, op2, middle, threshold1, threshold2):
                     operation_mirror_symmetry += 1
                     break
-                elif type == "y" and are_mirrored_y(op1, op2, middle, threshold1, threshold2):
+                elif type == "y" and are_mirrored_opy(op1, op2, middle, threshold2, threshold1):
                     operation_mirror_symmetry += 1
                     break
 
         operation_mirror_symmetry /= min(len(operations1), len(operations2))
         return operation_count_symmetry, operation_mirror_symmetry
 
+    def are_mirrored_nodex(node1, node2, middle, x_threshold, y_threshold):
+        left_x = node1["x"]
+        right_x = node2["x"]
+        mirrored_x = abs((middle - left_x) - (right_x - middle)) <= x_threshold
+        mirrored_y = abs(node1["y"] - node2["y"]) <= y_threshold
+
+        return mirrored_x and mirrored_y
+    
+    def are_mirrored_nodey(node1, node2, middle, y_threshold, x_threshold):
+        top_y = node1["y"]
+        bottom_y = node2["y"]
+        mirrored_y = abs((middle - top_y) - (bottom_y - middle)) <= y_threshold
+        mirrored_x = abs(node1["x"] - node2["x"]) <= x_threshold
+
+        return mirrored_y and mirrored_x
+
+    def node_symmetry(type, middle, threshold1, threshold2):
+        nodes1 = []
+        nodes2 = [] 
+        
+        for link in links:
+            for point in link["control_points"]:
+                if type == "x":
+                    location = point["x"]
+                else:
+                    location = point["y"]
+                if location <= middle:
+                    nodes1.append(point)
+                else:
+                    nodes2.append(point)
+
+        node_count_symmetry = min(len(nodes1) / len(nodes2), len(nodes2) / len(nodes1))
+        node_mirror_symmetry = 0
+        for node1 in nodes1:
+            for node2 in nodes2:
+                if type == "x" and are_mirrored_nodex(node1, node2, middle, threshold1, threshold2):
+                    node_mirror_symmetry += 1
+                    break
+                elif type == "y" and are_mirrored_nodey(node1, node2, middle, threshold2, threshold1):
+                    node_mirror_symmetry += 1
+                    break
+
+        node_mirror_symmetry /= min(len(nodes1), len(nodes2))
+        return node_count_symmetry, node_mirror_symmetry
 
     def boxes_touch(op1_name, op2_name):
         x1a, x2a, y1a, y2a = x_y_range(op1_name)
@@ -296,17 +340,19 @@ def analyze_graph(graph):
         alignment_score = round(((x_align + y_align) / (2 * max_alignment)), 2) if max_alignment else 1
         angle_score = round(1 - (unique_angles / max_angles), 2) if max_angles else 1
         touching_score = round(1 - (touching / total_ops**2), 2) if total_ops > 1 else 1  #Compare against possible pairs
+        symmetry_score = round(sum([op_count_symmetry1, op_count_symmetry2, op_mirror_symmetry1, op_mirror_symmetry2, node_count_symmetry1, node_count_symmetry2, node_mirror_symmetry1, node_mirror_symmetry2])/8, 2)
         excessive_node_score = round(1 - (node_count / total_links), 2) if total_links else 1
         if excessive_node_score < 0:
             excessive_node_score = 0
         final_score = round((
-        0.20 * directionality_score +
+        0.15 * directionality_score +
         0.15 * stacking_score +
         0.15 * spacing_score +
         0.15 * alignment_score +
         0.10 * angle_score +
         0.10 * touching_score +
-        0.05 * excessive_node_score
+        0.05 * excessive_node_score +
+        0.05 * symmetry_score
         ) * 100, 2)
         return {
             "Final Score": final_score,
@@ -316,7 +362,8 @@ def analyze_graph(graph):
             "Alignment Score": alignment_score,
             "Angle Score": angle_score,
             "Touching Score": touching_score,
-            "Node Score": excessive_node_score
+            "Node Score": excessive_node_score,
+            "Symmetry Score": symmetry_score
         }
 
     for op in operations:
@@ -388,8 +435,10 @@ def analyze_graph(graph):
     greatest_y= find_greatest_y(nodes_and_operations)
     greatest_y += 300
     middle2 = greatest_y/2
-    count_symmetry1, mirror_symmetry1 = operation_symmetry("x", middle1, 100, 10)
-    count_symmetry2, mirror_symmetry2 = operation_symmetry("y", middle2, 100, 10)
+    op_count_symmetry1, op_mirror_symmetry1 = operation_symmetry("x", middle1, 100, 10)
+    op_count_symmetry2, op_mirror_symmetry2 = operation_symmetry("y", middle2, 100, 10)
+    node_count_symmetry1, node_mirror_symmetry1 = node_symmetry("x", middle1, 50, 10)
+    node_count_symmetry2, node_mirror_symmetry2 = node_symmetry("y", middle2, 50, 10)
 
     grading = compute_final_score()
 
@@ -415,7 +464,8 @@ def analyze_graph(graph):
         "Alignment Score": grading["Alignment Score"],
         "Angle Score": grading["Angle Score"],
         "Touching Score": grading["Touching Score"],
-        "Node Score": grading["Node Score"]
+        "Node Score": grading["Node Score"],
+        "Symmetry Score": grading["Symmetry Score"],
     }
 
     return results
