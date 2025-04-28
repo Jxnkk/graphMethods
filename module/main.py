@@ -261,7 +261,7 @@ def analyze_graph(graph):
                     break
 
         operation_mirror_symmetry /= min(len(operations1), len(operations2))
-        return operation_count_symmetry, operation_mirror_symmetry
+        return round(operation_count_symmetry, 2), round(operation_mirror_symmetry, 2)
 
     def are_mirrored_nodex(node1, node2, middle, x_threshold, y_threshold):
         left_x = node1["x"]
@@ -306,7 +306,7 @@ def analyze_graph(graph):
                     break
 
         node_mirror_symmetry /= min(len(nodes1), len(nodes2))
-        return node_count_symmetry, node_mirror_symmetry
+        return round(node_count_symmetry, 2), round(node_mirror_symmetry, 2)
     
     def find_clustering(type, threshold_1, threshold_2):
         deduction = 0
@@ -483,6 +483,14 @@ def analyze_graph(graph):
         "Improper Stacking": improper_stacking,
         "Total Nodes": node_count,
         "Nodes Blocked": nodes_blocked,
+        "Operation Count X Symmetry": op_count_symmetry1, 
+        "Operation Count Y Symmetry": op_count_symmetry2, 
+        "Operation Mirror X Symmetry": op_mirror_symmetry1, 
+        "Operation Mirror Y Symmetry": op_mirror_symmetry2, 
+        "Node Count X Symmetry": node_count_symmetry1, 
+        "Node Count Y Symmetry": node_count_symmetry2, 
+        "Node Mirror X Symmetry": node_mirror_symmetry1, 
+        "Node Mirror Y Symmetry": node_mirror_symmetry2, 
         "Final Score": grading["Final Score"],
         "Directionality Score": grading["Directionality Score"],
         "Stacking Score": grading["Stacking Score"],
@@ -497,7 +505,7 @@ def analyze_graph(graph):
     
     return results
 
-with open("test_graph/graph_2z100o8c.json", "r") as f:
+with open("test_graph/graph_pcdarulg.json", "r") as f:
     graph = json.load(f)
-    print("Final Score:", analyze_graph(graph)["Final Score"])
+    print("Final Score:", analyze_graph(graph)["Operation Count X Symmetry"])
     

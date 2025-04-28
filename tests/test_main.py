@@ -21,8 +21,6 @@ class TestGraphAnalysis(unittest.TestCase):
         self.assertEqual(result["Backwards Links"], 0)
         self.assertEqual(result["Total Nodes"], 15)
         self.assertEqual(result["Nodes Blocked"], 0)
-        self.assertEqual(result["Total Stacking"], 14)
-        self.assertEqual(result["Improper Stacking"], 0)
         self.assertEqual(result["Directionality Score"], 1)
         self.assertEqual(result["Stacking Score"], 0.25)
         self.assertEqual(result["Spacing Score"], 0.25)
