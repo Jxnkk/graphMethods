@@ -507,5 +507,5 @@ def analyze_graph(graph):
 
 with open("test_graph/graph_pcdarulg.json", "r") as f:
     graph = json.load(f)
-    print("Final Score:", analyze_graph(graph)["Operation Count X Symmetry"])
+    print("Final Score:", analyze_graph(graph)["Final Score"])
     
