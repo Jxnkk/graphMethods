@@ -20,4 +20,4 @@ This project includes various methods for analyzing graphs features. Graphs are 
 Create a new virtual environment to run the code:
 
 ```bash
-python -m venv venv
+python -m venv .venv
