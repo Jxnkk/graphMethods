@@ -13,6 +13,7 @@ def analyze_graph(graph):
     nodes_blocked = 0
     backwards_links = 0
     stacking = 0
+    intersections = 0
     improper_stacking = 0
 
     def get_y_value(operation_name):
@@ -294,6 +295,9 @@ def analyze_graph(graph):
                 else:
                     nodes2.append(point)
 
+        if len(nodes1) == 0 or len(nodes2) == 0:
+            return 0.0, 0.0
+    
         node_count_symmetry = min(len(nodes1) / len(nodes2), len(nodes2) / len(nodes1))
         node_mirror_symmetry = 0
         for node1 in nodes1:
@@ -337,12 +341,53 @@ def analyze_graph(graph):
         x1b, x2b, y1b, y2b = x_y_range(op2_name)
         return (x1a < x2b and x2a > x1b) and (y1a < y2b and y2a > y1b)
 
-    def number_of_unique_angles(angles, rounding_factor=5):
+    def number_of_unique_angles(angles, rounding_factor = 5):
         rounded_angles = [round(angle / rounding_factor) * rounding_factor for angle in angles]
         unique_angles = set(rounded_angles)
 
         return len(unique_angles)
     
+    def distance(p1, p2):
+        return math.sqrt((p2["x"] - p1["y"])**2 + (p2["x"] - p1["y"])**2)
+    
+    def calculate_angle(A, B, C):
+        AB = distance(A, B)
+        BC = distance(B, C)
+        AC = distance(A, C)
+
+        cos_angle = (AB**2 + BC**2 - AC**2) / (2 * AB * BC)
+
+        cos_angle = max(-1, min(1, cos_angle))
+
+        angle = math.degrees(math.acos(cos_angle))
+        return angle
+
+    def calculate_slope(p1, p2):
+        if p1["x"] - p2["x"] == 0:
+            return 0.0 
+        return (p1["y"] - p2["y"]) / (p1["x"] - p2["x"])
+
+    def check_overlap(p1, p2, p3, p4):
+        if not (max(p1["x"], p2["x"]) >= min(p3["x"], p4["x"]) and min(p1["x"], p2["x"]) <= max(p3["x"], p4["x"])):
+            return False
+
+        if not (max(p1["y"], p2["y"]) >= min(p3["y"], p4["y"]) and min(p1["y"], p2["y"]) <= max(p3["y"], p4["y"])):
+            return False
+
+        return True
+
+    def segments_intersection(p1, p2, p3, p4):
+        slope_1 = calculate_slope(p1, p2)
+        slope_2 = calculate_slope(p3, p4)
+        
+        if slope_1 * slope_2 < 0 and check_overlap(p1, p2, p3, p4):
+            return True
+        return False
+
+    def get_subsegments(link):
+        pts = [pt for pt in link if "x" in pt and "y" in pt]
+        return [(pts[i], pts[i + 1]) for i in range(len(pts) - 1)]
+
     def compute_final_score():
         total_ops = len([op for op in operations if op["type"] == "PRIMITIVE_OPERATION"])
         total_links = len(links)
@@ -466,6 +511,15 @@ def analyze_graph(graph):
     node_count_symmetry1, node_mirror_symmetry1 = node_symmetry("x", middle1, 50, 10)
     node_count_symmetry2, node_mirror_symmetry2 = node_symmetry("y", middle2, 50, 10)
 
+    for i in range(len(nodes_and_operations)):
+        segs_i = get_subsegments(nodes_and_operations[i])
+        for j in range(i + 1, len(nodes_and_operations)):
+            segs_j = get_subsegments(nodes_and_operations[j])
+            for (A, B) in segs_i:
+                for (C, D) in segs_j:
+                    if segments_intersection(A, B, C, D):
+                        intersections += 1
+
     grading = compute_final_score()
 
     results = {
@@ -505,7 +559,7 @@ def analyze_graph(graph):
     
     return results
 
-with open("test_graph/graph_pcdarulg.json", "r") as f:
+with open("test_graph/intersection.json", "r") as f:
     graph = json.load(f)
     print("Final Score:", analyze_graph(graph)["Final Score"])
     
