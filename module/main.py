@@ -15,6 +15,7 @@ def analyze_graph(graph):
     stackings = 0
     intersections = 0
     improper_stacking = 0
+    excessive_nodes = 0
 
     def get_y_value(operation_name):
         for op in operations:
@@ -341,26 +342,10 @@ def analyze_graph(graph):
         x1b, x2b, y1b, y2b = x_y_range(op2_name)
         return (x1a < x2b and x2a > x1b) and (y1a < y2b and y2a > y1b)
 
-    def number_of_unique_angles(angles, rounding_factor = 5):
-        rounded_angles = [round(angle / rounding_factor) * rounding_factor for angle in angles]
+    def number_of_unique_angles(angles, rounding_factor):
+        rounded_angles = [round(abs(angle) / rounding_factor) * rounding_factor for angle in angles]
         unique_angles = set(rounded_angles)
-
         return len(unique_angles)
-    
-    def distance(p1, p2):
-        return math.sqrt((p2["x"] - p1["y"])**2 + (p2["x"] - p1["y"])**2)
-    
-    def calculate_angle(A, B, C):
-        AB = distance(A, B)
-        BC = distance(B, C)
-        AC = distance(A, C)
-
-        cos_angle = (AB**2 + BC**2 - AC**2) / (2 * AB * BC)
-
-        cos_angle = max(-1, min(1, cos_angle))
-
-        angle = math.degrees(math.acos(cos_angle))
-        return angle
 
     def calculate_slope(p1, p2):
         if p1["x"] - p2["x"] == 0:
@@ -399,48 +384,47 @@ def analyze_graph(graph):
         total_links = len(links)
         max_alignment = total_ops
         max_spacing = total_ops
-        max_angles = node_count  #Assume number of angles can scale with nodes
-        #Raw metric values
         x_align = len(find_alignment(x_values, 25))
         y_align = len(find_alignment(y_values, 25))
         x_spacing = spacing_uniformity(find_alignment(x_values, 25), 25)
         y_spacing = spacing_uniformity(find_alignment(y_values, 25), 25)
         touching = len(touching_pairs)
-        unique_angles = number_of_unique_angles(angle_values)
-        #Weighted components (adjust weights as needed)
+        unique_angles = number_of_unique_angles(angle_values, 10)
         directionality_score = round(1 - (backwards_links / total_links), 2) if total_links else 1
         stacking_score = round(1 - (improper_stacking / total_links), 2) if total_links else 1
         spacing_score = round(((x_spacing + y_spacing) / (2 * max_spacing)), 2) if max_spacing else 1
         alignment_score = round(((x_align + y_align) / (2 * max_alignment)), 2) if max_alignment else 1
-        angle_score = round(1 - (unique_angles / max_angles), 2) if max_angles else 1
+        angle_score = round(1 - (unique_angles / len(angle_values)), 2) 
         touching_score = round(1 - (touching / total_ops**2), 2) if total_ops > 1 else 1  #Compare against possible pairs
         symmetry_score = round(sum([op_count_symmetry1, op_count_symmetry2, op_mirror_symmetry1, op_mirror_symmetry2, node_count_symmetry1, node_count_symmetry2, node_mirror_symmetry1, node_mirror_symmetry2])/8, 2)
         excessive_node_score = round(1 - (node_count / total_links), 2) if total_links else 1
-        x_deduction = find_clustering("x", 25, 50)
-        y_deduction = find_clustering("y", 25, 50)
+        x_clustering_deduction = find_clustering("x", 25, 50)
+        y_clustering_deduction = find_clustering("y", 25, 50)
         if excessive_node_score < 0:
             excessive_node_score = 0
         final_score = round((
-        0.20 * directionality_score +
-        0.15 * stacking_score +
-        0.15 * spacing_score +
-        0.15 * alignment_score +
-        0.10 * angle_score +
-        0.15 * touching_score +
-        0.05 * excessive_node_score +
+        0.10 * directionality_score +     
+        0.35 * stacking_score +          
+        0.05 * spacing_score +            
+        0.10 * alignment_score +         
+        0.10 * angle_score +              
+        0.15 * touching_score +           
+        0.15 * excessive_node_score +     
         0.05 * symmetry_score
-        ) * 100, 2) + x_deduction + y_deduction - intersections
+        ) * 100, 2) + x_clustering_deduction + y_clustering_deduction - improper_stacking - nodes_blocked
         return {
             "Final Score": final_score,
             "Directionality Score": directionality_score,
             "Stacking Score": stacking_score,
-            "Spacing Score": spacing_score,
+            "Spacing Score": spacing_score, 
             "Alignment Score": alignment_score,
             "Angle Score": angle_score,
             "Touching Score": touching_score,
             "Node Score": excessive_node_score,
             "Symmetry Score": symmetry_score,
-            "Clustering Deduction": (x_deduction + y_deduction)/100
+            "Clustering Deduction": x_clustering_deduction + y_clustering_deduction,
+            "Improper Stacking Deduction": improper_stacking,
+            "Nodes Blocked Deduction": nodes_blocked
         }
 
     for op in operations:
@@ -544,7 +528,7 @@ def analyze_graph(graph):
         "Total Links": len(links),
         "Backwards Links": backwards_links,
         "Total Angles": len(angle_values),
-        "Unique Angles": number_of_unique_angles(angle_values),
+        "Unique Angles": number_of_unique_angles(angle_values, 5),
         "Total Stacking": stackings,
         "Improper Stacking": improper_stacking,
         "Total Nodes": node_count,
@@ -566,12 +550,28 @@ def analyze_graph(graph):
         "Touching Score": grading["Touching Score"],
         "Node Score": grading["Node Score"],
         "Symmetry Score": grading["Symmetry Score"],
-        "Clustering Deduction": grading["Clustering Deduction"]
+        "Clustering Deduction": grading["Clustering Deduction"],
+        "Improper Stacking Deduction": grading["Improper Stacking Deduction"] * -1,
+        "Nodes Blocked Deduction": grading["Nodes Blocked Deduction"] * -1
     }
     
     return results
 
-with open("test_graph/graph_grz8c41o.json", "r") as f:
+with open("test_graph/graph_mrq051mc.json", "r") as f:
     graph = json.load(f)
     print("Final Score:", analyze_graph(graph)["Final Score"])
+    print("Stacking Score:", analyze_graph(graph)["Stacking Score"])
+    print("Directionality Score:", analyze_graph(graph)["Directionality Score"])
+    print("Spacing Score:", analyze_graph(graph)["Spacing Score"])
+    print("Alignment Score:", analyze_graph(graph)["Alignment Score"])
+    print("Touching Score:", analyze_graph(graph)["Touching Score"])
+    print("Angle Score:", analyze_graph(graph)["Angle Score"])
+    print("Node Score:", analyze_graph(graph)["Node Score"])
+    print("Symmetry Score:", analyze_graph(graph)["Symmetry Score"])
+    print("Clustering Deduction:", analyze_graph(graph)["Clustering Deduction"])
+    print("Improper Stacking Deduction:", analyze_graph(graph)["Improper Stacking Deduction"])
+    print("Nodes Blocked Deduction:", analyze_graph(graph)["Nodes Blocked Deduction"])
+
+
+
     

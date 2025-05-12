@@ -79,7 +79,7 @@ class TestGraphAnalysis(unittest.TestCase):
 
         
     def test_graph_analysis4(self):
-        with open("test_graph/graph_c3boljl0.json", "r") as f:
+        with open("test_graph/graph_pcdarulg.json", "r") as f:
             graph = json.load(f)
 
         result = analyze_graph(graph)
