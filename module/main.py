@@ -12,7 +12,7 @@ def analyze_graph(graph):
     node_count = 0
     nodes_blocked = 0
     backwards_links = 0
-    stacking = 0
+    stackings = 0
     intersections = 0
     improper_stacking = 0
 
@@ -367,22 +367,28 @@ def analyze_graph(graph):
             return 0.0 
         return (p1["y"] - p2["y"]) / (p1["x"] - p2["x"])
 
-    def check_overlap(p1, p2, p3, p4):
-        if not (max(p1["x"], p2["x"]) >= min(p3["x"], p4["x"]) and min(p1["x"], p2["x"]) <= max(p3["x"], p4["x"])):
-            return False
-
-        if not (max(p1["y"], p2["y"]) >= min(p3["y"], p4["y"]) and min(p1["y"], p2["y"]) <= max(p3["y"], p4["y"])):
-            return False
-
-        return True
-
-    def segments_intersection(p1, p2, p3, p4):
+    def segments_intersection(p1, p2, p3, p4, source1, source2, sink1, sink2, threshold, threshold2):
         slope_1 = calculate_slope(p1, p2)
         slope_2 = calculate_slope(p3, p4)
+
+        x_min, x_second, x_third, x_max = sorted([p1["x"], p2["x"], p3["x"], p4["x"]])
+        y_min, y_second, y_third, y_max = sorted([p1["y"], p2["y"], p3["y"], p4["y"]])
+        x_location = [x_min in [p1["x"], p2["x"]], x_second in [p3["x"], p4["x"]], x_third in [p3["x"], p4["x"]], x_max in [p1["x"], p2["x"]]]
+        y_location = [y_min in [p1["y"], p2["y"]], y_second in [p3["y"], p4["y"]], y_third in [p3["y"], p4["y"]], y_max in [p1["y"], p2["y"]]]
+        valid_location_combinations = [[True, True, False, False], [False, False, True, True], [False, True, False, True]]
+        if x_location not in valid_location_combinations or y_location not in valid_location_combinations:
+            return "Nothing"
         
-        if slope_1 * slope_2 < 0 and check_overlap(p1, p2, p3, p4):
-            return True
-        return False
+        if source1 != source2 and slope_1 * slope_2 < 0:
+            return "Intersection"
+
+        if slope_1 * slope_2 > 0 and abs(abs(slope_1) - abs(slope_2)) <= threshold and x_location in valid_location_combinations[:2] and y_location in valid_location_combinations[:2]:
+            if source1 == source2:
+                return "Stacking"
+            else:
+                return "Improper Stacking"
+
+        return "Nothing"
 
     def get_subsegments(link):
         pts = [pt for pt in link if "x" in pt and "y" in pt]
@@ -423,7 +429,7 @@ def analyze_graph(graph):
         0.15 * touching_score +
         0.05 * excessive_node_score +
         0.05 * symmetry_score
-        ) * 100, 2) + x_deduction + y_deduction
+        ) * 100, 2) + x_deduction + y_deduction - intersections
         return {
             "Final Score": final_score,
             "Directionality Score": directionality_score,
@@ -517,9 +523,15 @@ def analyze_graph(graph):
             segs_j = get_subsegments(nodes_and_operations[j])
             for (A, B) in segs_i:
                 for (C, D) in segs_j:
-                    if segments_intersection(A, B, C, D):
-                        intersections += 1
-
+                    result = segments_intersection(A, B, C, D, nodes_and_operations[i][0], nodes_and_operations[j][0], nodes_and_operations[i][-1], nodes_and_operations[j][-1], 25, 0.25)
+                    if result != "Nothing":
+                        if result == "Intersection":
+                            intersections += 1
+                        elif result == "Stacking":
+                            stackings += 1
+                        else:
+                            improper_stacking += 1
+    
     grading = compute_final_score()
 
     results = {
@@ -533,7 +545,7 @@ def analyze_graph(graph):
         "Backwards Links": backwards_links,
         "Total Angles": len(angle_values),
         "Unique Angles": number_of_unique_angles(angle_values),
-        "Total Stacking": stacking,
+        "Total Stacking": stackings,
         "Improper Stacking": improper_stacking,
         "Total Nodes": node_count,
         "Nodes Blocked": nodes_blocked,
@@ -545,7 +557,7 @@ def analyze_graph(graph):
         "Node Count Y Symmetry": node_count_symmetry2, 
         "Node Mirror X Symmetry": node_mirror_symmetry1, 
         "Node Mirror Y Symmetry": node_mirror_symmetry2, 
-        "Final Score": grading["Final Score"],
+        "Final Score": round(grading["Final Score"], 2),
         "Directionality Score": grading["Directionality Score"],
         "Stacking Score": grading["Stacking Score"],
         "Spacing Score": grading["Spacing Score"],
@@ -559,7 +571,7 @@ def analyze_graph(graph):
     
     return results
 
-with open("test_graph/intersection.json", "r") as f:
+with open("test_graph/graph_grz8c41o.json", "r") as f:
     graph = json.load(f)
     print("Final Score:", analyze_graph(graph)["Final Score"])
     
