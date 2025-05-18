@@ -350,8 +350,8 @@ def analyze_graph(graph):
     def calculate_slope(p1, p2):
         if p1["x"] - p2["x"] == 0:
             return 0.0 
-        return (p1["y"] - p2["y"]) / (p1["x"] - p2["x"])
-
+        return (p1["y"] - p2["y"])/(p1["x"] - p2["x"])
+    
     def segments_intersection(p1, p2, p3, p4, source1, source2, sink1, sink2, threshold, threshold2):
         slope_1 = calculate_slope(p1, p2)
         slope_2 = calculate_slope(p3, p4)
@@ -360,25 +360,24 @@ def analyze_graph(graph):
         y_min, y_second, y_third, y_max = sorted([p1["y"], p2["y"], p3["y"], p4["y"]])
         x_location = [x_min in [p1["x"], p2["x"]], x_second in [p3["x"], p4["x"]], x_third in [p3["x"], p4["x"]], x_max in [p1["x"], p2["x"]]]
         y_location = [y_min in [p1["y"], p2["y"]], y_second in [p3["y"], p4["y"]], y_third in [p3["y"], p4["y"]], y_max in [p1["y"], p2["y"]]]
-        valid_location_combinations = [[True, True, False, False], [False, False, True, True], [False, True, False, True]]
+        valid_location_combinations = [[True, True, False, False], [False, False, True, True]]
         if x_location not in valid_location_combinations or y_location not in valid_location_combinations:
             return "Nothing"
         
-        if source1 != source2 and slope_1 * slope_2 < 0:
+        if source1 != source2 and slope_1 * slope_2 < 0 and x_location:
+            print(source1, sink1, source2, sink2)
             return "Intersection"
 
-        if slope_1 * slope_2 > 0 and abs(abs(slope_1) - abs(slope_2)) <= threshold and x_location in valid_location_combinations[:2] and y_location in valid_location_combinations[:2]:
+        if slope_1 * slope_2 > 0 and abs(abs(slope_1) - abs(slope_2)) <= threshold:
             if source1 == source2:
+                print(source1, sink1, source2, sink2)
                 return "Stacking"
             else:
+                print(source1, sink1, source2, sink2)
                 return "Improper Stacking"
 
         return "Nothing"
-
-    def get_subsegments(link):
-        pts = [pt for pt in link if "x" in pt and "y" in pt]
-        return [(pts[i], pts[i + 1]) for i in range(len(pts) - 1)]
-
+    
     def compute_final_score():
         total_ops = len([op for op in operations if op["type"] == "PRIMITIVE_OPERATION"])
         total_links = len(links)
@@ -431,6 +430,10 @@ def analyze_graph(graph):
         if op["type"] == "PRIMITIVE_OPERATION":
             x_values.append(op["position"]["x"])
             y_values.append(op["position"]["y"])
+
+    def get_subsegments(link):
+        pts = [pt for pt in link if "x" in pt and "y" in pt]
+        return [(pts[i], pts[i + 1]) for i in range(len(pts) - 1)]
     
     for link in links:
         source_name = link["source"]["operation"]
@@ -507,14 +510,17 @@ def analyze_graph(graph):
             segs_j = get_subsegments(nodes_and_operations[j])
             for (A, B) in segs_i:
                 for (C, D) in segs_j:
-                    result = segments_intersection(A, B, C, D, nodes_and_operations[i][0], nodes_and_operations[j][0], nodes_and_operations[i][-1], nodes_and_operations[j][-1], 25, 0.25)
+                    result = segments_intersection(A, B, C, D, nodes_and_operations[i][0], nodes_and_operations[j][0], nodes_and_operations[i][-1], nodes_and_operations[j][-1], 25, 5)
                     if result != "Nothing":
                         if result == "Intersection":
                             intersections += 1
+                            print("Intersection")
                         elif result == "Stacking":
                             stackings += 1
+                            print("Stacking")
                         else:
                             improper_stacking += 1
+                            print("Improper")
     
     grading = compute_final_score()
 
@@ -557,20 +563,21 @@ def analyze_graph(graph):
     
     return results
 
-with open("test_graph/graph_mrq051mc.json", "r") as f:
+with open("test_graph/graph_grz8c41o.json", "r") as f:
     graph = json.load(f)
-    print("Final Score:", analyze_graph(graph)["Final Score"])
-    print("Stacking Score:", analyze_graph(graph)["Stacking Score"])
-    print("Directionality Score:", analyze_graph(graph)["Directionality Score"])
-    print("Spacing Score:", analyze_graph(graph)["Spacing Score"])
-    print("Alignment Score:", analyze_graph(graph)["Alignment Score"])
-    print("Touching Score:", analyze_graph(graph)["Touching Score"])
-    print("Angle Score:", analyze_graph(graph)["Angle Score"])
-    print("Node Score:", analyze_graph(graph)["Node Score"])
-    print("Symmetry Score:", analyze_graph(graph)["Symmetry Score"])
-    print("Clustering Deduction:", analyze_graph(graph)["Clustering Deduction"])
-    print("Improper Stacking Deduction:", analyze_graph(graph)["Improper Stacking Deduction"])
-    print("Nodes Blocked Deduction:", analyze_graph(graph)["Nodes Blocked Deduction"])
+    graphGrade = analyze_graph(graph)
+    print("Final Score:", graphGrade["Final Score"])
+    print("Stacking Score:", graphGrade["Stacking Score"])
+    print("Directionality Score:", graphGrade["Directionality Score"])
+    print("Spacing Score:", graphGrade["Spacing Score"])
+    print("Alignment Score:", graphGrade["Alignment Score"])
+    print("Touching Score:", graphGrade["Touching Score"])
+    print("Angle Score:", graphGrade["Angle Score"])
+    print("Node Score:", graphGrade["Node Score"])
+    print("Symmetry Score:", graphGrade["Symmetry Score"])
+    print("Clustering Deduction:", graphGrade["Clustering Deduction"])
+    print("Improper Stacking Deduction:", graphGrade["Improper Stacking Deduction"])
+    print("Nodes Blocked Deduction:", graphGrade["Nodes Blocked Deduction"])
 
 
 

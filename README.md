@@ -4,15 +4,14 @@
 This project includes various methods for analyzing graphs features. Graphs are graded based on various features.
 
 ### Scoring Factors:
-- **Directionality and Hierarchy Compliance**: 20%
-- **Intersections**: 15%
-- **Spacing Uniformity**: 15%
-- **Angle Cleanliness**: 15%
-- **Excessive Nodes**: 10%
-- **Blocked Nodes**: 5%
+- **Directionality and Hierarchy Compliance**: 10%
+- **Intersections**: 35%
+- **Spacing Uniformity**: 10%
+- **Angle Cleanliness**: 10%
+- **Excessive Nodes**: 15%
+- **Blocked Nodes**: Deducts 1 point each time 
 - **Touching Operations**: 15%
 - **Clustering**: Deducts 1 point each time 
-- **Parallelism**: TBD
 - **Symmetry**: 5%
 
 ## Running the Project
