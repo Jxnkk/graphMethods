@@ -16,6 +16,7 @@ def analyze_graph(graph):
     intersections = 0
     improper_stacking = 0
     excessive_nodes = 0
+    parallel_lines = 0 
 
     def get_y_value(operation_name):
         for op in operations:
@@ -346,41 +347,45 @@ def analyze_graph(graph):
         rounded_angles = [round(abs(angle) / rounding_factor) * rounding_factor for angle in angles]
         unique_angles = set(rounded_angles)
         return len(unique_angles)
-
+        
     def calculate_slope(p1, p2, threshold):
-        if abs(p1["x"] - p2["x"]) == threshold:
-            return 0
+        if abs(p1["x"] - p2["x"]) <= threshold:
+            return 0  
         if abs(p1["y"] - p2["y"]) <= threshold:
-            return 1
-        return (p1["y"] - p2["y"])/(p1["x"] - p2["x"])
+            return 1  
+        return (p1["y"] - p2["y"]) / (p1["x"] - p2["x"])
 
     def check_overlap(p1, p2, p3, p4):
-        if not (max(p1["x"], p2["x"]) >= min(p3["x"], p4["x"]) and min(p1["x"], p2["x"]) <= max(p3["x"], p4["x"])):
-            return False
-
-        if not (max(p1["y"], p2["y"]) >= min(p3["y"], p4["y"]) and min(p1["y"], p2["y"]) <= max(p3["y"], p4["y"])):
-            return False
-
-        return True
+        overlap_x = (max(p1["x"], p2["x"]) >= min(p3["x"], p4["x"])) and (min(p1["x"], p2["x"]) <= max(p3["x"], p4["x"]))
+        overlap_y = (max(p1["y"], p2["y"]) >= min(p3["y"], p4["y"])) and (min(p1["y"], p2["y"]) <= max(p3["y"], p4["y"]))
+        return overlap_x and overlap_y
 
     def segments_intersection(p1, p2, p3, p4, source1, source2, threshold, threshold2):
         slope_1 = calculate_slope(p1, p2, threshold2)
         slope_2 = calculate_slope(p3, p4, threshold2)
 
-        x_min, x_second, x_third, x_max = sorted([p1["x"], p2["x"], p3["x"], p4["x"]])
-        y_min, y_second, y_third, y_max = sorted([p1["y"], p2["y"], p3["y"], p4["y"]])
-        x_location = [x_min in [p1["x"], p2["x"]], x_second in [p3["x"], p4["x"]], x_third in [p3["x"], p4["x"]], x_max in [p1["x"], p2["x"]]]
-        y_location = [y_min in [p1["y"], p2["y"]], y_second in [p3["y"], p4["y"]], y_third in [p3["y"], p4["y"]], y_max in [p1["y"], p2["y"]]]
-        valid_location_combinations = [[True, True, False, False], [False, False, True, True]]
-
-        if slope_1 * slope_2 > 0 and abs(abs(slope_1) - abs(slope_2)) <= threshold and x_location in valid_location_combinations[:2] and y_location in valid_location_combinations[:2]:
+        if slope_1 == 0 and slope_2 == 0:
+            if abs(p1["x"] - p3["x"]) <= threshold and check_overlap(p1, p2, p3, p4):
+                if source1 == source2:
+                    return "Stacking" 
+            else:
+                return "Parallel"
+        
+        if slope_1 == 1 and slope_2 == 1:
+            if abs(p1["y"] - p3["y"]) <= threshold and check_overlap(p1, p2, p3, p4):
+                if source1 == source2:
+                    return "Stacking"
+            else:
+                return "Parallel"
+        
+        if slope_1 * slope_2 >= 0 and abs(slope_1 - slope_2) <= threshold and check_overlap(p1, p2, p3, p4):
             if source1 == source2:
                 return "Stacking"
             else:
                 return "Improper Stacking"
-
+        
         return "Nothing"
-    
+
     def compute_final_score():
         total_ops = len([op for op in operations if op["type"] == "PRIMITIVE_OPERATION"])
         total_links = len(links)
@@ -506,6 +511,9 @@ def analyze_graph(graph):
     op_count_symmetry2, op_mirror_symmetry2 = operation_symmetry("y", middle2, 100, 10)
     node_count_symmetry1, node_mirror_symmetry1 = node_symmetry("x", middle1, 50, 10)
     node_count_symmetry2, node_mirror_symmetry2 = node_symmetry("y", middle2, 50, 10)
+    
+    
+    compared_segments = []
 
     for i in range(len(nodes_and_operations)):
         segs_i = get_subsegments(nodes_and_operations[i])
@@ -513,16 +521,17 @@ def analyze_graph(graph):
             segs_j = get_subsegments(nodes_and_operations[j])
             for (A, B) in segs_i:
                 for (C, D) in segs_j:
-                    result = segments_intersection(A, B, C, D, nodes_and_operations[i][0], nodes_and_operations[j][0], 25, 0.25)
-                    if result != "Nothing":
-                        if result == "Stacking":
-                            stackings += 1
-                            print("Stacking")
-                            print(nodes_and_operations[i][0], nodes_and_operations[j][0], nodes_and_operations[i][-1], nodes_and_operations[j][-1])
-                        else:
-                            improper_stacking += 1
-                            print("Improper")
-                            print(nodes_and_operations[i][0], nodes_and_operations[j][0], nodes_and_operations[i][-1], nodes_and_operations[j][-1])
+                    if not (nodes_and_operations[i][0], nodes_and_operations[i][-1]) in compared_segments and not (nodes_and_operations[j][0], nodes_and_operations[j][-1]) in compared_segments:
+                        result = segments_intersection(A, B, C, D, nodes_and_operations[i][0], nodes_and_operations[j][0], 25, 0.25)
+                        if result != "Nothing":
+                            if result == "Stacking":
+                                stackings += 1
+                            elif result == "Improper Stacking":
+                                improper_stacking += 1
+                            elif result == "Parallel":
+                                parallel_lines += 1
+                            compared_segments.append((nodes_and_operations[i][0], nodes_and_operations[i][-1]))
+                            compared_segments.append((nodes_and_operations[j][0], nodes_and_operations[j][-1]))
     
     grading = compute_final_score()
 
@@ -565,7 +574,7 @@ def analyze_graph(graph):
     
     return results
 
-with open("test_graph/graph_pcdarulg.json", "r") as f:
+with open("test_graph/graph_c3boljl0.json", "r") as f:
     graph = json.load(f)
     graphGrade = analyze_graph(graph)
     print("Final Score:", graphGrade["Final Score"])
