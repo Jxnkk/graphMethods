@@ -16,7 +16,7 @@ This project includes various methods for analyzing graphs features. Graphs are 
 
 ## Running the Project
 ![Example Graph](images/Example.png)
-The graph above receives a 72.6 
+The graph above receives a 72.6.
 Below is the explanation for the scoring factors: 
 
 - 1.0 stacking score because there was no occurence of improper stacking (i.e. links being stacked coming from different operations and data types)
