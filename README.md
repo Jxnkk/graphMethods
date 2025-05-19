@@ -30,10 +30,23 @@ Below is the explanation for the scoring factors:
 - -2 for clustering score because there were two occurences of clustering (one time in the area between Op_89cabbe2 and Op_c11dd55a vertically and another time between Op_2e15535e and Op_d0fe4507)
 - 0 for nodes blocked because no nodes were hidden behind operations
 
-### Running Project
-Create a virtual environment with this code:
+## Running Project
+Just call analyze_graph(graph) with your loaded graph JSON as the parameter and store it as a variable. The function returns a dictionary of information about the graph. 
+Here's what to call for the different scoring factors (Let's say we stored function returns as result in this case):
+
+- Final Score: result["Final Score"]
+- Directionality and Hierarchy Compliance: result["Directionality Score"]
+- Intersections: result["Stacking Score"]
+- Spacing Uniformity: result["Spacing Score"]
+- Angle Cleanliness: result["Angle Score"]
+- Excessive Nodes: result["Node Score"]
+- Blocked Nodes: result["Nodes Blocked Deduction"]
+- Touching Operations: result["Touching Score"]
+- Clustering: result["Clustering Deduction"]
+- Symmetry: result["Symmetry Score"]
+
+Create a virtual environment to run this code:
 
 ```bash
 python -m venv .venv
 
-Just call analyze_graph(graph) with your loaded graph JSON as the parameter and store the result in a variable. The function returns a dictionary of information about the graph. 
