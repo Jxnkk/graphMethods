@@ -14,7 +14,7 @@ This project includes various methods for analyzing graphs features. Graphs are 
 - **Clustering**: Deducts 1 point each time 
 - **Symmetry**: 5%
 
-## Running the Project
+### Example of Graph Graded:
 ![Example Graph](images/Example.png)
 The graph above receives a 72.6.
 Below is the explanation for the scoring factors: 
@@ -30,7 +30,10 @@ Below is the explanation for the scoring factors:
 - -2 for clustering score because there were two occurences of clustering (one time in the area between Op_89cabbe2 and Op_c11dd55a vertically and another time between Op_2e15535e and Op_d0fe4507)
 - 0 for nodes blocked because no nodes were hidden behind operations
 
-Create a new virtual environment to run the code:
+### Running Project
+Create a virtual environment with this code:
 
 ```bash
 python -m venv .venv
+
+Just call analyze_graph(graph) with your loaded graph JSON as the parameter and store the result in a variable. The function returns a dictionary of information about the graph. 
