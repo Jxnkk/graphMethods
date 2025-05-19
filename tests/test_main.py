@@ -18,7 +18,7 @@ class TestGraphAnalysis(unittest.TestCase):
         self.assertEqual(result["Operations Y Alignment"], 5)
         self.assertEqual(result["Number of Touching Operations"], 0)
         self.assertEqual(result["Total Links"], 20)
-        self.assertEqual(result["Total Stacking"], 6)
+        self.assertEqual(result["Total Stacking"], 8)
         self.assertEqual(result["Backwards Links"], 0)
         self.assertEqual(result["Total Nodes"], 15)
         self.assertEqual(result["Nodes Blocked"], 0)
@@ -53,7 +53,7 @@ class TestGraphAnalysis(unittest.TestCase):
         self.assertEqual(result["Number of Touching Operations"], 0)
         self.assertEqual(result["Total Links"], 15)
         self.assertEqual(result["Backwards Links"], 1)
-        self.assertEqual(result["Total Stacking"], 3)
+        self.assertEqual(result["Total Stacking"], 2)
         self.assertEqual(result["Total Nodes"], 10)
         self.assertEqual(result["Nodes Blocked"], 1)
 

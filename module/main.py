@@ -522,7 +522,7 @@ def analyze_graph(graph):
             for (A, B) in segs_i:
                 for (C, D) in segs_j:
                     if not (nodes_and_operations[i][0], nodes_and_operations[i][-1]) in compared_segments and not (nodes_and_operations[j][0], nodes_and_operations[j][-1]) in compared_segments:
-                        result = segments_intersection(A, B, C, D, nodes_and_operations[i][0], nodes_and_operations[j][0], 25, 0.25)
+                        result = segments_intersection(A, B, C, D, nodes_and_operations[i][0], nodes_and_operations[j][0], 1, 0.25)
                         if result != "Nothing":
                             if result == "Stacking":
                                 stackings += 1
@@ -574,7 +574,7 @@ def analyze_graph(graph):
     
     return results
 
-with open("test_graph/graph_c3boljl0.json", "r") as f:
+with open("test_graph/graph_pcdarulg.json", "r") as f:
     graph = json.load(f)
     graphGrade = analyze_graph(graph)
     print("Final Score:", graphGrade["Final Score"])
