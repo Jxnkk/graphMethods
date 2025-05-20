@@ -30,9 +30,9 @@ Below is the explanation for the scoring factors:
 - -2 for clustering score because there were two occurences of clustering (one time in the area between Op_89cabbe2 and Op_c11dd55a vertically and another time between Op_2e15535e and Op_d0fe4507)
 - 0 for nodes blocked because no nodes were hidden behind operations
 
-## Running Project
-Just call analyze_graph(graph) with your loaded graph JSON as the parameter and store it as a variable. The function returns a dictionary of information about the graph. 
-Here's what to call for the different scoring factors (Let's say we stored function returns as result in this case):
+## Running this Project
+Just call analyze_graph(graph) with your loaded graph JSON as the parameter and store it as a variable. (e.g. result = analyze_graph(graph))
+This function returns a dictionary with detailed information about the graph. You can use it to get the scores for different scoring factors:
 
 - Final Score: result["Final Score"]
 - Directionality and Hierarchy Compliance: result["Directionality Score"]
@@ -45,8 +45,28 @@ Here's what to call for the different scoring factors (Let's say we stored funct
 - Clustering: result["Clustering Deduction"]
 - Symmetry: result["Symmetry Score"]
 
-Create a virtual environment to run this code:
+You can also access raw data from the result, like the number of operations, links, or blocked nodes, if needed.
+
+To run this code, make sure to create a virtual environment first. Here's how you can make a virtual environment through the terminal: 
 
 ```bash
 python -m venv .venv
+```
+
+## Other project on visualizing and improving the graphs
+
+### Github Link: 
+https://github.com/coder2195text/cerbrec-graph-thingy
+
+### How to run it
+This project uses yarn, learn how to install it from the terminal [here]([https://www.openai.com](https://yarnpkg.com/getting-started/install))
+
+Do yarn on clone or just to make sure your computer has the stuff downloaded.
+
+Then, do yarn start and navigate to localhost:1234 
+
+
+
+
+
 
