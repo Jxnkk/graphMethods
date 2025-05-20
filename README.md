@@ -31,6 +31,7 @@ Below is the explanation for the scoring factors:
 - 0 for nodes blocked because no nodes were hidden behind operations
 
 ## Running this Project
+The main function used in this project is analyze_graph(graph). It takes in a graph JSON and performs a variety of analyses on the graph's structure. 
 Just call analyze_graph(graph) with your loaded graph JSON as the parameter and store it as a variable. (e.g. result = analyze_graph(graph))
 This function returns a dictionary with detailed information about the graph. You can use it to get the scores for different scoring factors:
 
