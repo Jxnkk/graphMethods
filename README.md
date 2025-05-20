@@ -59,7 +59,7 @@ python -m venv .venv
 https://github.com/coder2195text/cerbrec-graph-thingy
 
 ### How to run it
-This project uses yarn, learn how to install it from the terminal [here]([https://www.openai.com](https://yarnpkg.com/getting-started/install))
+This project uses yarn, learn how to install it from the terminal [here](https://yarnpkg.com/getting-started/install)
 
 Do yarn on clone or just to make sure your computer has the stuff downloaded.
 
