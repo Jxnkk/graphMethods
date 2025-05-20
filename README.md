@@ -54,10 +54,13 @@ To run this code, make sure to create a virtual environment first. Here's how yo
 python -m venv .venv
 ```
 
-## Other project on visualizing and improving the graphs
+## Other project
 
 ### Github Link: 
 https://github.com/coder2195text/cerbrec-graph-thingy
+
+### Project Overview:
+Visualizes and modifies graphs with the goal of making them more readable/structurally correct 
 
 ### How to run it
 This project uses yarn, learn how to install it from the terminal [here](https://yarnpkg.com/getting-started/install)
